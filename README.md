@@ -12,7 +12,7 @@ Model Evaluation: The trained models are evaluated using various metrics such as
 Receiver Operating Characteristic (ROC) Curve: ROC curves are plotted to compare the performance of different models in terms of true positive rate against false positive rate.
 Usage:
 
-Clone the repository: git clone https://github.com/amir-rs/breast-cancer-detection.git
+Clone the repository: git clone https://github.com/amir-rs/Brest-Cancer-Prediction-using-ML.git
 Run the Jupyter Notebook: jupyter notebook breast_cancer_detection.ipynb
 Dataset:
 The dataset used in this project is the Breast Cancer Wisconsin (Diagnostic) dataset available in scikit-learn's datasets module. It contains features computed from a digitized image of a fine needle aspirate (FNA) of a breast mass.
