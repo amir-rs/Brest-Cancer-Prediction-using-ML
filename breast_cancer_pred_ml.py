@@ -7,21 +7,38 @@ Original file is located at
     https://colab.research.google.com/drive/1sN3wKcfoRo-vxxHmrT5rV1qcQLqtIPGs
 """
 
-# Import necessary libraries
+# Standard imports
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import LabelEncoder , StandardScaler
+from random import shuffle
+
+# Preprocessing and sampling
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from imblearn.over_sampling import SMOTE
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import accuracy_score , precision_score , recall_score , f1_score , confusion_matrix , make_scorer
-from sklearn.ensemble import RandomForestClassifier , AdaBoostClassifier
+
+# Model selection and evaluation
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, make_scorer
+
+# Machine learning models
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-import sklearn.datasets
 from xgboost import XGBClassifier
 from sklearn.svm import SVC
+from catboost import CatBoostClassifier
+from sklearn.model_selection import GridSearchCV
+
+# Deep learning imports
+import tensorflow as tf
+from sklearn.datasets import load_breast_cancer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization, Activation
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras import regularizers
+
 # Suppress warnings for cleaner output
 import warnings
 warnings.filterwarnings("ignore")
@@ -249,4 +266,109 @@ plt.ylim([0.0, 1.05])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.grid(True)
+plt.show()
+
+# Load breast cancer dataset
+breast_cancer_dataset = load_breast_cancer()
+X, y = breast_cancer_dataset.data, breast_cancer_dataset.target
+
+# Standardize features
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+# Shuffle and split dataset into train and test sets
+X, y = shuffle(X, y, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define advanced neural network architecture
+model = Sequential([
+    Dense(256, input_shape=(X_train.shape[1],), kernel_regularizer=regularizers.l2(0.001)),
+    BatchNormalization(),
+    Activation('relu'),
+    Dropout(0.5),
+    Dense(128, kernel_regularizer=regularizers.l2(0.001)),
+    BatchNormalization(),
+    Activation('relu'),
+    Dropout(0.5),
+    Dense(64, kernel_regularizer=regularizers.l2(0.001)),
+    BatchNormalization(),
+    Activation('relu'),
+    Dropout(0.5),
+    Dense(1, activation='sigmoid')
+])
+
+# Compile the model with advanced optimizer and metrics
+optimizer = Adam(learning_rate=1e-3)
+model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+
+# Define learning rate scheduler
+lr_scheduler = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=5, min_lr=1e-5)
+
+# Define early stopping
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+# Train the model with callbacks for learning rate scheduling and early stopping
+history = model.fit(X_train, y_train, epochs=100, batch_size=32,
+                    validation_data=(X_test, y_test),
+                    callbacks=[lr_scheduler, early_stopping])
+
+# Evaluate the model
+loss, accuracy = model.evaluate(X_test, y_test)
+print(f'Test Loss: {loss:.4f}, Test Accuracy: {accuracy:.4f}')
+
+# Predict classes
+y_pred = (model.predict(X_test) > 0.5).astype("int32")
+
+# Calculate evaluation metrics
+precision = precision_score(y_test, y_pred)
+recall = recall_score(y_test, y_pred)
+f1 = f1_score(y_test, y_pred)
+conf_matrix = confusion_matrix(y_test, y_pred)
+
+print(f'Precision: {precision:.4f}, Recall: {recall:.4f}, F1 Score: {f1:.4f}')
+print('Confusion Matrix:')
+print(conf_matrix)
+
+# Plot training history
+plt.figure(figsize=(12, 6))
+
+# Plot loss
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+
+# Plot accuracy
+plt.subplot(1, 2, 2)
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+# Receiver Operating Characteristic (ROC) Curve
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, label='ROC Curve')
+plt.plot([0, 1], [0, 1], linestyle='--', color='red')
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve')
+plt.legend()
+plt.show()
+
+# Distribution of Predictions for each Class
+predictions = model.predict(X_test)
+plt.hist(predictions[y_test == 0], bins=20, color='blue', alpha=0.5, label='Class 0')
+plt.hist(predictions[y_test == 1], bins=20, color='red', alpha=0.5, label='Class 1')
+plt.title('Distribution of Predictions for each Class')
+plt.xlabel('Predictions')
+plt.ylabel('Frequency')
+plt.legend()
 plt.show()
